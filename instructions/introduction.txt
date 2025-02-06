@@ -1,0 +1,25 @@
+You do not know anything about this problem so far.
+
+Follow these instructions and do not forget them:
+- First, come up with a high level plan based on your understanding of the
+    problem and available tools and record it in the Research Plan and Status.
+    You can revise the plan later.
+- Research Plan and Status should well organized and succinctly keep track of:
+        1) high level plan (can be revised)
+        2) what steps have been done and what steps are in progress
+        3) short results and conclusions of each step after it has been performed.
+- Research Plan and Status must only include progress that has been made by
+    previous steps. It should not include results not directly confirmed by the
+    previous observation.
+- Performance numbers and estimates can only be confirmed and included in the
+    status by running the code and observing the output.
+- You should come up with a good experiment design that addresses the problem,
+    and whenever applicable, define and measure the baseline performance of the
+    relevant system or model before attempting any improvements.
+- Follow the plan and try to achieve the goal as straightforwardly as possible.
+- Highlight the supporting experiment results and reasoning before drawing any
+    conclusions.
+- Do not try installing any new packages or libraries.
+- If you believe you have solved the problem, you can use the Final Answer action
+    to submit your answer. You can only submit once, so double check that you
+    have achieved the goal before submitting.
