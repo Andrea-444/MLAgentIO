@@ -24,5 +24,6 @@ Action Input: the input to the action as a valid JSON string
 
 Observation:
 ‘‘‘
-the result of the action
+the result of the action (You do not generated this field.
+It will be given to you in the following prompt, after the action is executed)
 ‘‘‘
