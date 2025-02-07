@@ -66,7 +66,7 @@ class LLMActionParser:
             action_input_str = message[input_start + 13:].strip()
             action_input_str = LLMActionParser.replace_n_occurrences(action_input_str, "\n", " ", n=3)
             action_input_str = LLMActionParser.replace_n_occurrences(action_input_str, "\n", " ", n=3, reverse=True)
-            action_input_str = action_input_str.replace("\n","\\n")
+            action_input_str = action_input_str.replace("\n", "\\n")
             action_input = json.loads(action_input_str)
 
             return action, action_input

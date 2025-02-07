@@ -6,12 +6,11 @@ import sys
 
 
 class ActionExecutioner:
-
     FINAL_ANSWER_FLAG = 'Final answer submitted'
 
-    def __init__(self, action_mapping: dict, task_folder_path):
+    def __init__(self, action_mapping: dict, task_dir_path):
         self.action_mapping = action_mapping
-        self.task_folder_path = task_folder_path
+        self.task_folder_path = task_dir_path
 
     def execute(self, action_name: str, action_args: dict) -> str:
 
@@ -210,7 +209,6 @@ class ActionExecutioner:
             if not all([script_name, start_line]):
                 return "Error: Missing required parameters"
 
-
             full_script_name = ActionExecutioner.build_full_path(args["task_folder_path"], script_name)
 
             if not os.path.exists(full_script_name):
@@ -218,9 +216,6 @@ class ActionExecutioner:
 
             with open(full_script_name, 'r') as f:
                 lines = f.readlines()
-
-            # if end_line - start_line > 100:
-            #     return "Error: Cannot display more than 100 lines"
 
             if end_line is not None:
                 selected_lines = lines[start_line - 1:end_line]

@@ -1,0 +1,5 @@
+Task: Perform a cohesive edit on the script
+Edit Request:
+Rename all functions to use snake_case with an "op_" prefix (e.g., op_add, op_subtract).
+Modify the divide function to raise a ValueError instead of returning a string when b == 0.
+Add type hints to all function parameters and return types.

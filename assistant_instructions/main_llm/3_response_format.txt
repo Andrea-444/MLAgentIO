@@ -27,4 +27,3 @@ Observation:
 the result of the action (You do not generated this field.
 It will be given to you in the following prompt, after the action is executed)
 ‘‘‘
-
