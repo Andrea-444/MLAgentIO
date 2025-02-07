@@ -1,4 +1,4 @@
-You are a helpful research assistant. You have access to the following tools:
+You are a helpful research assistant. You have access to the following tools/actions:
 
 - List Files:
     Use this to navigate the file system.
