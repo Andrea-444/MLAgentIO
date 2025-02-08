@@ -21,7 +21,7 @@ Thought: The first step is to inspect train.py to analyze its structure, dataset
 Action: Understand File
 
 Action Input: {
-        "file_name": "../test/dummy_script.py",
+        "file_name": "dummy_script.py",
         "things_to_look_for": "Task: Understand the file
 Analysis Request:
 Identify all function definitions and their purposes.

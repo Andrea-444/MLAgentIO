@@ -59,14 +59,17 @@ class LLMActionParser:
                 return None, None
 
             # Extract action input json
-            input_end = message.find('\n', input_start)
+            input_end = message.find(':', input_start)
             if input_end == -1:
                 input_end = len(message)
 
-            action_input_str = message[input_start + 13:].strip()
+            input_args_end = message.find("}", input_end)
+
+            action_input_str = message[input_end + 1:input_args_end + 1].strip()
             action_input_str = LLMActionParser.replace_n_occurrences(action_input_str, "\n", " ", n=3)
             action_input_str = LLMActionParser.replace_n_occurrences(action_input_str, "\n", " ", n=3, reverse=True)
             action_input_str = action_input_str.replace("\n", "\\n")
+            action_input_str = action_input_str.replace("None", "null")
             action_input = json.loads(action_input_str)
 
             return action, action_input
@@ -76,39 +79,4 @@ class LLMActionParser:
             return None, None
 
 
-# Example
-if __name__ == "__main__":
-    # Example messages
-    list_files_message = '''
-        Reflection: The edit is correct.
-        Action: List Files
-        Action Input: {"dir_path": "./"}
-        Observation: The script executed successfully
-        '''
 
-    example_message_inspect_lines = '''
-        Reflection: The edit is correct.
-        Action: Inspect Script Lines
-        Action Input: {"script_name": "./example-file.py", "start_line_number": 2, "end_line_number": 5}
-        Observation: The script executed successfully
-        '''
-
-    execute_script_message = '''
-        Action: Execute Script
-        Action Input: {"script_name": "./example-file.py"}
-        '''
-
-    understand_file_message = '''
-        Action: Understand File
-        Action Input: {"file_name": "example.py", "things_to_look_for": "main function definition"}
-        '''
-
-    edit_script_message = '''
-        Action: Edit Script (AI)
-        Action Input: {"script_name": "example.py", "edit_instruction": "Add error handling", "save_name": "example_updated.py"}
-        '''
-    action_name, action_args = LLMActionParser.parse_message(execute_script_message)
-    action_executioner = ActionExecutioner(LLMActionParser.DEFAULT_ACTION_NAME_DICT)
-    observation = action_executioner.execute(action_name, action_args)
-
-    print(f"Observation: \n{observation}")

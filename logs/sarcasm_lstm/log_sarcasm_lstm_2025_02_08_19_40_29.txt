@@ -47,11 +47,11 @@ You are a helpful research assistant. You have access to the following tools/act
     Observation: [The observation will be output of the script or errors.]
     ‘‘‘
 
-- Edit Script:
+- Edit Script (AI):
     Use this to do a relatively large but cohesive edit over a python script. Instead of editing the script directly, you should describe the edit instruction so that another AI can help you do this.
     Usage:
     ‘‘‘
-    Action: Edit Script
+    Action: Edit Script (AI)
     Action Input: {
         "script_name": [a valid python script name with relative path to current directory if needed. An empty script will be created if it does not exist.],
         "edit_instruction": [a detailed step by step description on how to edit it.],
@@ -134,8 +134,6 @@ the result of the action (You do not generated this field.
 It will be given to you in the following prompt, after the action is executed)
 ‘‘‘
 
-
-
 Research Problem: You are given a training script (train.py) for a machine learning model on a specific dataset.
 The model is already implemented using the current hyperparameters in train.py.
 Your objective is to enhance the model’s performance by improving the baseline accuracy
@@ -177,7 +175,6 @@ Observation:
 '''
 [
   "data",
-  "example-file.py",
   "train.py"
 ]
 '''

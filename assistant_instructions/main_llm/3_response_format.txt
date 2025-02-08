@@ -20,10 +20,16 @@ Thought: What you are currently doing, what actions to perform and why.
 
 Action: The action to take, should be one of the names of the tools.
 
-Action Input: the input to the action as a valid JSON string
+Action Input: the input to the action as a valid JSON string. DO NOT INCLUDE ANY COMMENT IN THIS PART> ONLY A VALID JSON STRING
 
-Observation:
-‘‘‘
-the result of the action (You do not generated this field.
-It will be given to you in the following prompt, after the action is executed)
-‘‘‘
+After each of your responses, you will receive two pieces of information:
+The iteration number.
+The observation of the specified action.
+
+When the iteration number reaches 12, you must terminate using the action/tool: Final answer.
+Regardless of the model's results, you must submit the output by saving it in submission.txt, by uncommenting the submission code and then running the script one final time.
+If, at any iteration, the observation contains the message "Terminate", you must IMMEDIATELY terminate, regardless of the iteration number.
+This termination process is mandatory and must be followed strictly.
+
+DO NOT FORGET TO RESPONSE IN SPECIFIED FORMAT, EXACTLY!
+The final answer response MUST ALSO FOLLOW THE SPECIFIED FORMAT

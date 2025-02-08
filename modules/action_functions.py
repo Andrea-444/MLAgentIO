@@ -4,19 +4,16 @@ import json
 import subprocess
 import sys
 from modules.llm_assistant import LLMAssistant
-from modules.MLAgentIO import MLAgentIO
-
-# API_KEY = read_file("../api_keys/open_ai.txt")
-API_KEY = '<KEY>'
+from modules.ml_agent_io import MLAgentIO
 
 
 class ActionExecutioner:
     FINAL_ANSWER_FLAG = 'Final answer submitted'
 
-    def __init__(self, action_mapping: dict, task_dir_path):
+    def __init__(self, action_mapping: dict, task_dir_path, api_key: str):
         self.action_mapping = action_mapping
         self.task_folder_path = task_dir_path
-        # self.llm_assistant = llm_assistant
+        self.api_key = api_key
 
     def execute(self, action_name: str, action_args: dict) -> str:
 
@@ -30,6 +27,7 @@ class ActionExecutioner:
             return f"Error: Unknown action '{action_name}'"
 
         action_args["task_folder_path"] = self.task_folder_path
+        action_args["api_key"] = self.api_key
 
         return self.action_mapping[action_name](action_args)
 
@@ -96,8 +94,8 @@ class ActionExecutioner:
                     [python_executable, script_name],
                     capture_output=True,
                     text=True,
-                    timeout=30,
-                    cwd=os.path.dirname(os.path.abspath(script_name)) or '.'
+                    timeout=None,
+                    cwd=os.path.abspath(args["task_folder_path"]) or '.'
                 )
 
                 output = []
@@ -106,7 +104,8 @@ class ActionExecutioner:
                     output.append(result.stdout)
 
                 if result.stderr:
-                    output.append("Errors:")
+                    # pass
+                    output.append("Errors and Warnings:")
                     output.append(result.stderr)
 
                 output.append(f"Process finished with exit code {result.returncode}")
@@ -176,21 +175,26 @@ class ActionExecutioner:
             if not file_name or not things_to_look_for:
                 return "Error: Missing required parameters"
 
-            full_file_path = ActionExecutioner.build_full_path("", file_name)
+            full_file_path = ActionExecutioner.build_full_path(args["task_folder_path"], file_name)
+
+            # print("FULL FILE PATH:", full_file_path)
 
             if not os.path.exists(full_file_path):
                 return f"Error: File '{full_file_path}' does not exist"
 
             with open(full_file_path, 'r') as f:
                 content = f.read()
-            # TODO LLM Needed for this action
-            supporting_assistant = LLMAssistant(api_key=API_KEY,
-                                        starting_instructions=MLAgentIO.build_instructions(
-                                            MLAgentIO.SUPPORTING_LLM_INSTRUCTIONS_DIR))
+
+            # return content
 
             llm_instruction = things_to_look_for
 
-            llm_response = supporting_assistant.consult_once(content, llm_instruction)
+            llm_assistant = LLMAssistant(api_key=args["api_key"],
+                                         starting_instructions=MLAgentIO.build_instructions(
+                                             MLAgentIO.SUPPORTING_LLM_INSTRUCTIONS_DIR))
+
+            llm_response = llm_assistant.consult_once(script_content=content,
+                                                      instructions=llm_instruction)
             return llm_response
         except Exception as e:
             return f"Error understanding file: {str(e)}"
@@ -221,8 +225,11 @@ class ActionExecutioner:
             start_line = args.get('start_line_number')
             end_line = args.get('end_line_number')
 
-            if not all([script_name, start_line]):
-                return "Error: Missing required parameters"
+            if script_name is None:
+                return "Error: Missing script name"
+
+            if start_line is None:
+                return "Error: Missing starting line"
 
             full_script_name = ActionExecutioner.build_full_path(args["task_folder_path"], script_name)
 
@@ -231,6 +238,9 @@ class ActionExecutioner:
 
             with open(full_script_name, 'r') as f:
                 lines = f.readlines()
+
+            if start_line == 0:
+                start_line = 1
 
             if end_line is not None:
                 selected_lines = lines[start_line - 1:end_line]
@@ -274,7 +284,8 @@ class ActionExecutioner:
             if not all([script_name, edit_instruction, save_name]):
                 return "Error: Missing required parameters"
 
-            full_script_path = ActionExecutioner.build_full_path("", script_name)
+            full_script_path = ActionExecutioner.build_full_path(args["task_folder_path"], script_name)
+
             if os.path.exists(full_script_path):
                 with open(full_script_path, 'r') as f:
                     content = f.read()
@@ -282,11 +293,11 @@ class ActionExecutioner:
                 content = ""  # New file will be created
 
             # TODO LLM Needed for this action
-            supporting_assistant = LLMAssistant(api_key=API_KEY,
-                                               starting_instructions=MLAgentIO.build_instructions(
-                                                   MLAgentIO.SUPPORTING_LLM_INSTRUCTIONS_DIR))
+            supporting_assistant = LLMAssistant(api_key=args["api_key"],
+                                                starting_instructions=MLAgentIO.build_instructions(
+                                                    MLAgentIO.SUPPORTING_LLM_INSTRUCTIONS_DIR))
 
-            llm_instruction = f"Edit the following script based on the instruction: {edit_instruction}"
+            llm_instruction = edit_instruction
             edited_content = supporting_assistant.consult_once(script_content=content, instructions=llm_instruction)
             full_save_path = ActionExecutioner.build_full_path(args["task_folder_path"], save_name)
             with open(full_save_path, 'w') as f:

@@ -67,6 +67,7 @@ if __name__ == '__main__':
         metrics=[keras.metrics.Recall(), keras.metrics.F1Score(), keras.metrics.Precision()]
     )
 
+
     # Training
 
     print("Training:\n")
@@ -87,6 +88,7 @@ if __name__ == '__main__':
     # Classification Report
     print("\nConfusion Matrix:\n")
     print(str(confusion_matrix(test_y_arg, predicts_arg)))
+
 
     # ==== How to save submission =====
 

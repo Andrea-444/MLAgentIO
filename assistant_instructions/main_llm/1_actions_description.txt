@@ -12,20 +12,21 @@ You are a helpful research assistant. You have access to the following tools/act
     ‘‘‘
 
 - Inspect Script Lines:
-    Use this to inspect specific part of a python script precisely, or the full content of a short script. To inspect the whole script, set the end_line_number parameter to None. This is especially helpful when debugging.
+    Use this to inspect specific part of a python script precisely, or the full content of a short script. To inspect the whole script, set the end_line_number parameter to null. This is especially helpful when debugging.
     Usage:
     ‘‘‘
     Action: Inspect Script Lines
     Action Input: {
         "script_name": [a valid python script name with relative path to current directory if needed],
         "start_line_number": [a valid line number],
-        "end_line_number": [a valid line number or None]
+        "end_line_number": [a valid line number or null]
         }
         Observation: [The observation will be the content of the script between start_line_number and end_line_number . If the script does not exist, the observation will be an error message.]
     ‘‘‘
 
 - Understand File:
-    Use this to read the whole file and understand certain aspects. You should provide detailed description on what to look for and what should be returned.
+    Use this to read the whole file and understand certain aspects. You should provide detailed description on what to look for and what should be returned. In this will help you a supporting AI.
+    This supporting AI does not have access to any history or memory, meaning each request it processes is completely new to it.
     Usage:
     ‘‘‘
     Action: Understand File
@@ -49,7 +50,8 @@ You are a helpful research assistant. You have access to the following tools/act
 
 - Edit Script (AI):
     Use this to do a relatively large but cohesive edit over a python script. Instead of editing the script directly, you should describe the edit instruction so that another AI can help you do this.
-    Usage:
+    This supporting AI does not have access to any history or memory, meaning each request it processes is completely new to it.
+
     ‘‘‘
     Action: Edit Script (AI)
     Action Input: {

@@ -1,12 +1,7 @@
-import os
 from openai import OpenAI
-from modules.low_level_actions import read_file
 
 
 class LLMAssistant:
-    tmp_index = 0
-    dummy_output_names = ["../test/dummy_output.txt", "../test/dummy_output_1.txt", "../test/dummy_output_2.txt"]
-
     def __init__(self, api_key: str, starting_instructions: str):
         self.starting_instructions = self.to_developer_message(starting_instructions)
         self.history = []
@@ -31,19 +26,15 @@ class LLMAssistant:
         return context
 
     def __ask_assistant(self, context: list, model="gpt-4o-mini", max_tokens=None) -> str:
-        dummy_output = read_file(self.dummy_output_names[self.tmp_index])
-        self.tmp_index += 1
-        return dummy_output
+        response = self.client.chat.completions.create(
+            model=model,
+            messages=context,
+            max_tokens=max_tokens,
+            n=1,
+            store=True
+        )
 
-        # response = self.client.chat.completions.create(
-        #     model=model,
-        #     messages=context,
-        #     max_tokens=max_tokens,
-        #     n=1,
-        #     store=True
-        # )
-        #
-        # return response.choices[0].message.content
+        return response.choices[0].message.content
 
     def initiate_conversation(self, research_problem: str):
         research_problem_message = self.to_user_message(research_problem)
@@ -54,8 +45,10 @@ class LLMAssistant:
         self.history.append(self.to_assistant_message(output))
         return output
 
-    def consult(self, observation: str) -> str:
-        context = self.build_context(observation)
+    def consult(self, observation: str, observation_index: int) -> str:
+        full_observation = (f"Iteration: {observation_index}\n"
+                            f"Observation:\n{observation}")
+        context = self.build_context(full_observation)
         output = self.__ask_assistant(context)
         self.history.append(self.to_assistant_message(output))
         return output
@@ -63,7 +56,6 @@ class LLMAssistant:
     def consult_once(self, script_content: str, instructions: str) -> str:
         message = self.to_user_message(f"{instructions}\n\nScript Content:\n{script_content}")
         context = [self.starting_instructions, message]
-        self.print_context(context)
         output = self.__ask_assistant(context)
         return output
 

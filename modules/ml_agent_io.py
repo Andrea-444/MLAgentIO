@@ -1,8 +1,6 @@
 import os
 from modules.low_level_actions import read_file
 
-API_KEY = '<KEY>'
-
 
 class Task:
     MAIN_DIR = "../tasks"
