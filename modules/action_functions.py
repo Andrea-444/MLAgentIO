@@ -3,6 +3,11 @@ import os
 import json
 import subprocess
 import sys
+from modules.llm_assistant import LLMAssistant
+from modules.MLAgentIO import MLAgentIO
+
+# API_KEY = read_file("../api_keys/open_ai.txt")
+API_KEY = '<KEY>'
 
 
 class ActionExecutioner:
@@ -11,6 +16,7 @@ class ActionExecutioner:
     def __init__(self, action_mapping: dict, task_dir_path):
         self.action_mapping = action_mapping
         self.task_folder_path = task_dir_path
+        # self.llm_assistant = llm_assistant
 
     def execute(self, action_name: str, action_args: dict) -> str:
 
@@ -170,13 +176,22 @@ class ActionExecutioner:
             if not file_name or not things_to_look_for:
                 return "Error: Missing required parameters"
 
-            if not os.path.exists(file_name):
-                return f"Error: File '{file_name}' does not exist"
+            full_file_path = ActionExecutioner.build_full_path("", file_name)
 
-            with open(file_name, 'r') as f:
+            if not os.path.exists(full_file_path):
+                return f"Error: File '{full_file_path}' does not exist"
+
+            with open(full_file_path, 'r') as f:
                 content = f.read()
             # TODO LLM Needed for this action
-            return f"Analyzed file '{file_name}' looking for: {things_to_look_for}"
+            supporting_assistant = LLMAssistant(api_key=API_KEY,
+                                        starting_instructions=MLAgentIO.build_instructions(
+                                            MLAgentIO.SUPPORTING_LLM_INSTRUCTIONS_DIR))
+
+            llm_instruction = things_to_look_for
+
+            llm_response = supporting_assistant.consult_once(content, llm_instruction)
+            return llm_response
         except Exception as e:
             return f"Error understanding file: {str(e)}"
 
@@ -259,15 +274,25 @@ class ActionExecutioner:
             if not all([script_name, edit_instruction, save_name]):
                 return "Error: Missing required parameters"
 
-            if os.path.exists(script_name):
-                with open(script_name, 'r') as f:
+            full_script_path = ActionExecutioner.build_full_path("", script_name)
+            if os.path.exists(full_script_path):
+                with open(full_script_path, 'r') as f:
                     content = f.read()
             else:
                 content = ""  # New file will be created
 
             # TODO LLM Needed for this action
-            edited_content = f"Original content with applied changes based on: {edit_instruction}"
+            supporting_assistant = LLMAssistant(api_key=API_KEY,
+                                               starting_instructions=MLAgentIO.build_instructions(
+                                                   MLAgentIO.SUPPORTING_LLM_INSTRUCTIONS_DIR))
+
+            llm_instruction = f"Edit the following script based on the instruction: {edit_instruction}"
+            edited_content = supporting_assistant.consult_once(script_content=content, instructions=llm_instruction)
+            full_save_path = ActionExecutioner.build_full_path(args["task_folder_path"], save_name)
+            with open(full_save_path, 'w') as f:
+                f.write(edited_content)
 
             return edited_content
+
         except Exception as e:
             return f"Error editing script: {str(e)}"
