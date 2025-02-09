@@ -1,8 +1,0 @@
-You are given a training script (train.py) for a machine learning model on a specific dataset.
-The model is already implemented using the current hyperparameters in train.py.
-Your objective is to enhance the model’s performance by improving the baseline accuracy
-by at least 10% while keeping the number of training epochs within 10 to optimize efficiency.
-After training, you must generate a classification report and a confusion matrix for the test set,
-saving them to submission.txt as specified in train.py.
-If the accuracy improvement is not achieved within 12 iterations (prompts),
-terminate the process using the appropriate tool: 'Final Answer'.
