@@ -2,9 +2,10 @@ from openai import OpenAI
 
 
 class LLMAssistant:
-    def __init__(self, api_key: str, starting_instructions: str):
+    def __init__(self, api_key: str, starting_instructions: str, model=None):
         self.starting_instructions = self.to_developer_message(starting_instructions)
         self.history = []
+        self.model = model if model else "gpt-4o-mini"
         self.client = OpenAI(api_key=api_key)
 
     @staticmethod
@@ -25,9 +26,9 @@ class LLMAssistant:
         self.history.append(observation_message)
         return context
 
-    def __ask_assistant(self, context: list, model="gpt-4o-mini", max_tokens=None) -> str:
+    def __ask_assistant(self, context: list, max_tokens=None) -> str:
         response = self.client.chat.completions.create(
-            model=model,
+            model=self.model,
             messages=context,
             max_tokens=max_tokens,
             n=1,
