@@ -19,8 +19,8 @@ class Task:
 
 
 class MLAgentIO:
-    MAIN_LLM_INSTRUCTIONS_DIR = "../assistant_instructions/main_llm"
-    SUPPORTING_LLM_INSTRUCTIONS_DIR = "../assistant_instructions/supporting_llm"
+    MAIN_LLM_INSTRUCTIONS_DIR = "../assistants_instructions/main"
+    SUPPORTING_LLM_INSTRUCTIONS_DIR = "../assistants_instructions/supporting"
 
     def __init__(self, task_name: str | None = None):
         self.main_instructions: str = self.build_instructions(self.MAIN_LLM_INSTRUCTIONS_DIR)

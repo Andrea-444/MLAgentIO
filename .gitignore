@@ -1,4 +1,7 @@
-.idea
+.idea/
+__pycache__/
+backup/
+test/
 api_keys/
 open_ai.txt
 hugging_face.txt

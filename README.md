@@ -49,13 +49,18 @@ To test the agent, follow these steps:
 - Enable users to create custom tasks.
 - Automate execution without user confirmation.
 - Improve task structuring and performance monitoring.
+- Implement a test-agnostic environment for task execution 
 
 ## License
-[Specify license details here]
+This project is developed as part of a team effort by Viktor Kostadinoski and Andrea Stevanoska from the Faculty of Computer Science in Skopje, under the guidance of Professor Sonja Gievska and Teaching Assistant Martina Toshevska. All rights reserved. Redistribution and use of this code, with or without modification, are permitted for educational and research purposes, provided proper credit is given to the original authors.
+
+This project was highly inspired by MLAgentBench from Stanford, which can be found on GitHub: [MLAgentBench](https://github.com/snap-stanford/MLAgentBench). It is based on the research presented in the following paper: [MLAgentBench Paper](https://arxiv.org/abs/2310.03302)
 
 ## Contributors
-- Andrea-444 (Andrea Stevanoska), Faculty of computer science and engineering, Macedonia
-- Itonkdong (Viktor Kostadinoski), Faculty of computer science and engineering, Macedonia
+- **Andrea Stevanoska (Andrea-444)** – Developer
+- **Viktor Kostadinoski (Itonkdong)** – Developer
+- **Professor Sonja Gievska** – Supervisor
+- **Teaching and Research Assistant Martina Toshevska** – Supervisor
 
 ---
 For further inquiries or contributions, feel free to open an issue or submit a pull request!
