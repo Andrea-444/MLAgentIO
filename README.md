@@ -46,10 +46,10 @@ To test the agent, follow these steps:
    This file contains a detailed record of the agent’s operations.
 
 ## Future Plans
-- Enable users to create custom tasks.
-- Automate execution without user confirmation.
-- Improve task structuring and performance monitoring.
-- Implement a test-agnostic environment for task execution 
+- Enable users to create and add their own personalized tasks.
+- Expand the use of various LLMs beyond just those from OpenAI.
+- Conduct performance testing to assess and optimize the agent's capabilities.
+- Eliminate the confirmation commands currently embedded within the agent, which are useful for testing but hinder full automation. Removing these commands will allow for complete automation of the agent.
 
 ## License
 This project is developed as part of a team effort by Viktor Kostadinoski and Andrea Stevanoska from the Faculty of Computer Science in Skopje, under the guidance of Professor Sonja Gievska and Teaching Assistant Martina Toshevska. All rights reserved. Redistribution and use of this code, with or without modification, are permitted for educational and research purposes, provided proper credit is given to the original authors.
