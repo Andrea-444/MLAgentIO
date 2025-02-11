@@ -1,0 +1,14 @@
+
+LSTM Test classification report:
+              precision    recall  f1-score   support
+
+           0       0.92      0.20      0.32        56
+           1       0.41      0.97      0.57        32
+
+    accuracy                           0.48        88
+   macro avg       0.66      0.58      0.45        88
+weighted avg       0.73      0.48      0.41        88
+
+LSTM Confusion Matrix:
+[[11 45]
+ [ 1 31]]

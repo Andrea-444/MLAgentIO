@@ -1,0 +1,15 @@
+You are provided with a dataset for an unknown machine learning task.
+Your objective is to first analyze the dataset and determine the type of task (e.g., classification, sentiment analysis, etc.).
+
+Once the task is identified, you must implement two different architectures:
+
+A neural network model using LSTM, Convolutional, Dense, and other relevant layers from Keras.
+A transformer-based model using a pretrained BERT model from the Transformers library.
+A starting script (train.py) is provided, where all necessary libraries are already imported,
+and placeholders are marked for where model architectures should be implemented.
+
+BEFORE EXECUTING THE SCRIPT MAKE SURE THAT BOTH ARCHITECTURES ARE PRESENT IN THE SCRIPT!
+
+The script also contains commented code on how to save the final results.
+At the end of training, evaluate both models and determine which one performs better.
+Save the respective results in submission_lstm.txt and submission_bert.txt as outlined in train.py.
