@@ -1,6 +1,7 @@
 import os
 import shutil
 from datetime import datetime
+import pandas as pd
 
 from modules.low_level_actions import read_file
 
@@ -181,3 +182,152 @@ class MLAgentIO:
                 str: The timestamp when the task was activated.
         """
         return self.activation_timestamp
+
+    @staticmethod
+    def create_task(task_name: str) -> bool:
+        """
+        Creates a new ML task with the required directory structure and files.
+
+        Parameters:
+            task_name (str): Name of the task to be created
+
+        Returns:
+            bool: True if task was created successfully, False otherwise
+
+        Directory structure created:
+        ../tasks/
+        └── task_name/
+            ├── description.txt
+            └── setup/
+                ├── train.py
+                └── data/
+        """
+        try:
+            task_dir = os.path.join(Task.MAIN_DIR, task_name)
+            if os.path.exists(task_dir):
+                print(f"Error: Task '{task_name}' already exists")
+                return False
+
+            os.makedirs(task_dir)
+
+            setup_dir = os.path.join(task_dir, "setup")
+            data_dir = os.path.join(setup_dir, "data")
+            os.makedirs(setup_dir)
+            os.makedirs(data_dir)
+
+            train_path = os.path.join(setup_dir, "train.py")
+            with open(train_path, 'w') as f:
+                f.write("""# Enter your training script here""")
+
+            guidelines_message = """
+    Please provide a description for your ML task.
+
+    Guidelines for writing a good task description:
+    --------------------------------------------
+    1. Clear Objective: State what the model needs to achieve
+    2. Performance Targets: Specify required improvements (e.g., 5% accuracy increase)
+    3. Constraints: Mention any limitations (e.g., max epochs, memory constraints)
+    4. Data Context: Briefly describe the dataset's nature if relevant
+    5. Submission Requirements: Specify what and how it needs to be saved
+    
+    You can also enter it manually in the file, for which you will have to press enter twice (2 empty lines)
+    to finish this input and leave the description empty.
+
+    Example description:
+    ------------------
+    You are given a training script (train.py) for a machine learning model on a specific dataset.
+    The model is already implemented using the current hyperparameters in train.py.
+    Your objective is to enhance the model's performance by improving the baseline accuracy
+    by at least 5% while keeping the number of training epochs within 10 to optimize efficiency.
+    You do not know what is the baseline accuracy of this model.
+    After training, you must generate a classification report and a confusion matrix for the test set,
+    saving them to submission.txt as specified in train.py.
+
+    Enter your task description (press Enter twice to finish):"""
+
+            print(guidelines_message)
+
+            lines = []
+            while True:
+                line = input()
+                if line == "":
+                    if lines and lines[-1] == "":
+                        break
+                lines.append(line)
+
+            description = "\n".join(lines).strip()
+
+            description_path = os.path.join(task_dir, "description.txt")
+            with open(description_path, 'w') as f:
+                f.write(description)
+
+            completion_message = f"""
+    Task '{task_name}' created successfully!
+    Location: {task_dir}
+
+    Next steps:
+    1. Add your dataset files to the 'data' directory
+    2. Implement your training script in train.py"""
+
+            print(completion_message)
+
+            return True
+
+        except Exception as e:
+            print(f"Error creating task: {str(e)}")
+            return False
+
+    @staticmethod
+    def save_performance_metrics(assistant_model: str, requests: int, tokens_spent: int,
+                                 money_spent: float, goal_achieved: bool) -> bool:
+        """
+        Saves agent performance metrics to evaluation/agent_performance.csv.
+        Creates the file and directory if they don't exist.
+
+        Parameters:
+            assistant_model (str): Name/version of the assistant model
+            requests (int): Number of requests made
+            tokens_spent (int): Total tokens used
+            money_spent (float): Total cost in dollars
+            goal_achieved (bool): Whether the task goal was achieved
+
+        Returns:
+            bool: True if metrics were saved successfully, False otherwise
+        """
+        try:
+            eval_dir = "../evaluation"
+            if not os.path.exists(eval_dir):
+                os.makedirs(eval_dir)
+
+            file_path = os.path.join(eval_dir, "agent_performance.csv")
+
+            dtypes = {
+                'assistant_model': 'str',
+                'requests': 'int64',
+                'tokens_spent': 'int64',
+                'money_spent': 'float64',
+                'goal_achieved': 'bool'
+            }
+
+            new_data = {
+                'assistant_model': [assistant_model],
+                'requests': [requests],
+                'tokens_spent': [tokens_spent],
+                'money_spent': [money_spent],
+                'goal_achieved': [goal_achieved]
+            }
+
+            new_df = pd.DataFrame(new_data).astype(dtypes)
+
+            if not os.path.exists(file_path):
+                new_df.to_csv(file_path, index=False)
+            else:
+                df = pd.read_csv(file_path, dtype=dtypes)
+                df = pd.concat([df, new_df], ignore_index=True)
+                df.to_csv(file_path, index=False)
+
+            return True
+
+        except Exception as e:
+            print(f"Error saving performance metrics: {str(e)}")
+            return False
