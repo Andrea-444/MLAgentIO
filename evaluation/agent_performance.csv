@@ -1,2 +1,4 @@
-assistant_model,requests,tokens_spent,money_spent,goal_achieved
-
+task_name,assistant_model,requests,tokens_spent,money_spent,goal_achieved
+informal_multi_modal,gpt-4o-mini,2,4561,0.00091185,False
+informal_multi_modal,gpt-4o-mini,2,4498,0.00088395,False
+informal_multi_modal,gpt-4o-mini,3,7169,0.00142005,False

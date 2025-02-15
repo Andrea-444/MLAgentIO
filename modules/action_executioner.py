@@ -10,10 +10,22 @@ from low_level_actions import build_full_path
 class ActionExecutioner:
     FINAL_ANSWER_FLAG = 'Final answer submitted'
 
-    def __init__(self, action_mapping: dict, task_dir_path, assistant: LLMAssistant):
+    def __init__(self, action_mapping: dict, assistant: LLMAssistant):
         self.action_mapping = action_mapping
-        self.task_folder_path = task_dir_path
+        self.task_dir_path = None
         self.assistant = assistant
+
+    def setup(self, task_dir_path: str):
+        """
+            Sets up the task directory path.
+
+            Parameters:
+                task_dir_path (str): The path to the task directory.
+
+            Behavior:
+                - Stores the provided task directory path in an instance variable.
+            """
+        self.task_dir_path = task_dir_path
 
     def execute(self, action_name: str, action_args: dict) -> str:
         """
@@ -38,6 +50,9 @@ class ActionExecutioner:
                 -> Calls self.action_mapping["process_data"]({"input_file": "data.txt", "task_folder_path": ..., "assistant": ...})
             """
 
+        if self.task_dir_path is None:
+            return "Error: ActionExecutioner not properly setup. Missing task directorium path"
+
         if action_name is None:
             return "Error: Action Name is None"
 
@@ -47,7 +62,7 @@ class ActionExecutioner:
         if action_name not in self.action_mapping:
             return f"Error: Unknown action '{action_name}'"
 
-        action_args["task_folder_path"] = self.task_folder_path
+        action_args["task_folder_path"] = self.task_dir_path
         action_args["assistant"] = self.assistant
 
         return self.action_mapping[action_name](action_args)
@@ -169,9 +184,12 @@ class ActionExecutioner:
         """
         try:
             answer = args.get('final_answer')
+            goal_achieved = args.get("goal_achieved", False)
+
             if not answer:
                 return "Error: No final answer provided"
-            return f"{ActionExecutioner.FINAL_ANSWER_FLAG}: {answer}"
+            return (f"{ActionExecutioner.FINAL_ANSWER_FLAG}: {answer}"
+                    f"\nGoal Achieved: {goal_achieved}\n")
         except Exception as e:
             return f"Error submitting final answer: {str(e)}"
 
@@ -330,7 +348,3 @@ class ActionExecutioner:
 
         except Exception as e:
             return f"Error editing script: {str(e)}"
-
-    # @staticmethod
-    # def save_submission(args: Dict) -> str:
-    #     return ""

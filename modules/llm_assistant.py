@@ -1,12 +1,15 @@
 from openai import OpenAI
+from evaluator import UsageStatistics
 
 
 class LLMAssistant:
+
     def __init__(self, api_key: str, starting_instructions: str, model=None):
         self.starting_instructions = self.to_developer_message(starting_instructions)
         self.history = []
         self.model = model if model else "gpt-4o-mini"
         self.client = OpenAI(api_key=api_key)
+        self.usage_statistics = UsageStatistics(self.model)
 
     @staticmethod
     def to_developer_message(instruction: str) -> dict:
@@ -47,7 +50,34 @@ class LLMAssistant:
         """
         return {"role": "assistant", "content": response}
 
-    def build_context(self, observation: str) -> list:
+    @staticmethod
+    def print_message(message: dict):
+        """
+            Displays the conversation history in a readable format.
+
+            Behavior:
+                - Prints a separator followed by the stored conversation history.
+                - Calls 'print_message' for each message in the history.
+        """
+        print("ROLE:", message["role"])
+        print("CONTENT:\n", message["content"])
+        print("=" * 100)
+
+    @staticmethod
+    def print_context(context: list):
+        """
+            Prints the content of all messages in a given conversation context.
+
+            Parameters:
+                context (list): A list of messages to be printed.
+
+            Behavior:
+                - Iterates through the context and prints each message's content.
+        """
+        for message in context:
+            print(message["content"])
+
+    def __build_context(self, observation: str) -> list:
         """
             Constructs the conversation context by incorporating past interactions.
 
@@ -90,6 +120,8 @@ class LLMAssistant:
             n=1,
             store=True
         )
+
+        self.usage_statistics.update(response)
 
         return response.choices[0].message.content
 
@@ -135,7 +167,7 @@ class LLMAssistant:
         """
         full_observation = (f"Iteration: {observation_index}\n"
                             f"Observation:\n{observation}")
-        context = self.build_context(full_observation)
+        context = self.__build_context(full_observation)
         output = self.__ask_assistant(context)
         self.history.append(self.to_assistant_message(output))
         return output
@@ -172,32 +204,43 @@ class LLMAssistant:
         for message in self.history:
             self.print_message(message)
 
-    @staticmethod
-    def print_message(message: dict):
+    def get_usage_statistics(self) -> UsageStatistics:
         """
-            Displays the conversation history in a readable format.
+            Retrieves the current usage statistics.
+
+            Returns:
+                UsageStatistics: The current usage statistics instance.
 
             Behavior:
-                - Prints a separator followed by the stored conversation history.
-                - Calls 'print_message' for each message in the history.
+                - Provides access to tracked values such as input tokens, output tokens, and request count.
         """
-        print("ROLE:", message["role"])
-        print("CONTENT:\n", message["content"])
-        print("=" * 100)
+        return self.usage_statistics
 
-    @staticmethod
-    def print_context(context: list):
+    def reset_usage_statistics(self):
         """
-            Prints the content of all messages in a given conversation context.
-
-            Parameters:
-                context (list): A list of messages to be printed.
+            Resets the usage statistics.
 
             Behavior:
-                - Iterates through the context and prints each message's content.
+                - Reinitializes the `UsageStatistics` instance with the model.
+                - Clears all tracked values (input tokens, output tokens, and request count).
         """
-        for message in context:
-            print(message["content"])
+        self.usage_statistics = UsageStatistics(self.model)
+
+    def get_and_reset_usage_statistics(self) -> UsageStatistics:
+        """
+            Retrieves and resets the usage statistics.
+
+            Returns:
+                UsageStatistics: The usage statistics before resetting.
+
+            Behavior:
+                - Retrieves the current usage statistics.
+                - Resets the statistics immediately after retrieval.
+                - Ensures that new tracking sessions start fresh.
+        """
+        statistics = self.get_usage_statistics()
+        self.reset_usage_statistics()
+        return statistics
 
     def end_conversation(self):
         """

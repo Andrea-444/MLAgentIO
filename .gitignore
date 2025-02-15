@@ -1,5 +1,6 @@
 .idea/
 __pycache__/
+modules/__pycache__/
 backup/
 test/
 api_keys/

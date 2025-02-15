@@ -1,17 +1,35 @@
 import os
-from datetime import datetime
-from ml_agent_io import Task
 
 
 class AgentLogger:
     LOGS_DEFAULT_DIR = "../logs"
 
-    def __init__(self, task_name: str, log_timestamp: datetime, logs_dir_path: str = None, ):
+    def __init__(self, logs_dir_path: str = None):
         if logs_dir_path is None:
             logs_dir_path = AgentLogger.LOGS_DEFAULT_DIR
 
-        log_file_name = f"log_{task_name}_{log_timestamp}.txt"
-        log_file_path = os.path.join(logs_dir_path, log_file_name)
+        self.logs_dir_path = logs_dir_path
+        self.logs_file = None
+        self.step = 0
+
+    def setup(self, task_name: str, log_timestamp_str: str):
+        """
+           Initializes the logging setup for a specific task.
+
+           Parameters:
+               task_name (str): The name of the task for which logs are being created.
+               log_timestamp_str (str): A timestamp string to ensure unique log file names.
+
+           Behavior:
+               - Constructs a log file name using the task name and timestamp.
+               - Creates the default logs directory if it does not exist.
+               - Opens a new log file in write mode and sets it as the active log file.
+               - Initializes the step counter to track log entries.
+       """
+        log_file_name = f"log_{task_name}_{log_timestamp_str}.txt"
+        log_file_path = os.path.join(self.logs_dir_path, log_file_name)
+
+        os.makedirs(self.LOGS_DEFAULT_DIR, exist_ok=True)
 
         self.logs_file = open(log_file_path, mode="w", encoding="utf-8")
         self.step = 0
@@ -27,8 +45,14 @@ class AgentLogger:
             Behavior:
                 - Writes the provided instructions and research problem to the log file.
         """
-        self.logs_file.write(instructions)
-        self.logs_file.write(research_problem)
+        if self.logs_file is None:
+            print(f"Error initiating logger: {self.__class__.__name__} not properly setup. Missing log file")
+
+        try:
+            self.logs_file.write(instructions)
+            self.logs_file.write(research_problem)
+        except Exception as e:
+            print(f"Error initiating logger: {e}")
 
     def save_log(self, output: str, observation: str):
         """

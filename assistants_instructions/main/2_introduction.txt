@@ -27,8 +27,8 @@ Follow these instructions and do not forget them:
     conclusions.
 - Do not try installing any new packages or libraries.
 - If you believe you have solved the problem, you can use the Final Answer action
-    to submit your answer. You can only submit once, so double check that you
-    have achieved the goal before submitting.
+    to finalize your answer. You can only finalize once, so double check that you
+    have achieved the goal before finalizing.
 - Before your Final Answer:
     1. Use Edit Script (AI) to uncomment the submission code of the script you are editing
     2. Execute the script to generate submission.txt

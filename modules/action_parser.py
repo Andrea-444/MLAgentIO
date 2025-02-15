@@ -1,10 +1,10 @@
 import json
 from typing import Dict, Optional, Tuple
-from action_functions import ActionExecutioner
+from action_executioner import ActionExecutioner
 from low_level_actions import replace_n_occurrences
 
 
-class LLMActionParser:
+class ActionParser:
     DEFAULT_ACTION_MAPPING = {
         'List Files': ActionExecutioner.list_files,
         'Execute Script': ActionExecutioner.execute_script,
@@ -55,3 +55,36 @@ class LLMActionParser:
         except Exception as e:
             print(f"Error parsing message: {e}")
             return None, None
+
+    @staticmethod
+    def parse_final_message(message: str) -> bool | None:
+        """
+           Parses a message to determine if the goal was achieved.
+
+           Parameters:
+               message (str): The input message containing the goal status.
+
+           Returns:
+               bool | None:
+                   - True if the message indicates that the goal was achieved.
+                   - False if the message explicitly states the goal was not achieved.
+                   - None if the goal status could not be determined.
+
+           Behavior:
+               - Searches for the phrase 'Goal Achieved:' in the message.
+               - Extracts the status following this phrase.
+               - Returns True if the extracted status is 'True', False otherwise.
+               - Handles exceptions gracefully and returns None in case of errors.
+        """
+        try:
+            goal_start = message.find('Goal Achieved:')
+            if goal_start == -1:
+                return None
+
+            goal_end = message.find('\n', goal_start)
+            status = message[goal_start + len('Goal Achieved:'):goal_end].strip()
+            task_status = status == 'True'
+            return task_status
+        except Exception as e:
+            print(f"Error parsing final message: {e}")
+            return None

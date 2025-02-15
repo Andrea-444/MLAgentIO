@@ -69,7 +69,8 @@ You are a helpful research assistant. You have access to the following tools/act
     ‘‘‘
     Action: Final Answer
     Action Input: {
-        "final_answer": [a detailed description on the final answer]
+        "final_answer": [a detailed description on the final answer],
+        "goal_achieved": [true/false based on the final answer]
         }
-    Observation: [The observation will be empty.]
+    Observation: [The observation will be a structured summary of the final answer provided.]
     ‘‘‘

@@ -1,16 +1,22 @@
 import os
 import shutil
 from datetime import datetime
-import pandas as pd
 
+from modules.action_executioner import ActionExecutioner
+from modules.action_parser import ActionParser
+from modules.evaluator import AgentEvaluator
+from modules.llm_assistant import LLMAssistant
+from modules.logger import AgentLogger
 from modules.low_level_actions import read_file
 
 
 class Task:
     MAIN_DIR = "../tasks"
-    SUBMISSION_FILE_NAME = "submission.txt"
 
     def __init__(self, name: str):
+        if name not in tuple(Task.list_all_tasks()):
+            raise Exception("Invalid task name")
+
         self.name = name
         self.description = read_file(Task.MAIN_DIR, name, "description.txt")
 
@@ -36,7 +42,7 @@ class Task:
 
            Behavior:
                - Retrieves a list of all entries in `Task.MAIN_DIR`.
-               - Returns the names of the directories (tasks).
+               - Returns the names of the tasks.
        """
         return os.listdir(Task.MAIN_DIR)
 
@@ -46,16 +52,28 @@ class MLAgentIO:
     SUPPORTING_LLM_INSTRUCTIONS_DIR = "../assistants_instructions/supporting"
     ENVIRONMENT_DIR = "../environment"
 
-    def __init__(self, task_name: str | None = None):
-        self.activation_timestamp = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
-        self.main_instructions: str = self.build_instructions(self.MAIN_LLM_INSTRUCTIONS_DIR)
-        self.supporting_instructions = self.build_instructions(self.SUPPORTING_LLM_INSTRUCTIONS_DIR)
-        self.all_tasks: [Task] = Task.list_all_tasks()
-        self.active_task: Task = self.__choose_task(task_name)
-        self.task_env_dir_path = self.__setup_task()
+    def __init__(self, api_key: str, assistant_model: str | None = None):
+        self.main_instructions: str = self.__build_instructions(self.MAIN_LLM_INSTRUCTIONS_DIR)
+        self.supporting_instructions = self.__build_instructions(self.SUPPORTING_LLM_INSTRUCTIONS_DIR)
+        self.main_assistant = LLMAssistant(api_key=api_key,
+                                           starting_instructions=self.main_instructions,
+                                           model=assistant_model
+                                           )
+        self.supporting_assistant = LLMAssistant(api_key=api_key,
+                                                 starting_instructions=self.supporting_instructions,
+                                                 model=assistant_model
+                                                 )
+
+        self.parser = ActionParser()
+
+        self.executioner = ActionExecutioner(action_mapping=self.parser.DEFAULT_ACTION_MAPPING,
+                                             assistant=self.supporting_assistant)
+
+        self.logger = AgentLogger()
+        self.evaluator = AgentEvaluator()
 
     @staticmethod
-    def build_instructions(instructions_dir) -> str:
+    def __build_instructions(instructions_dir) -> str:
         """
             Constructs a complete instruction set by reading and combining all instruction files in a directory.
 
@@ -79,7 +97,8 @@ class MLAgentIO:
             instructions += "\n\n"
         return instructions
 
-    def __choose_task(self, task_name: str | None) -> Task:
+    @staticmethod
+    def __choose_task(task_name: str | None) -> Task:
         """
             Selects a task either by name or by user input.
 
@@ -93,17 +112,46 @@ class MLAgentIO:
                 - If a task name is provided, it creates a `Task` instance for it.
                 - If no name is given, it lists all available tasks and prompts the user to select one.
         """
-        if task_name is not None:
-            return Task(task_name)
+        try:
+            if task_name is not None:
+                return Task(task_name)
+            else:
+                return MLAgentIO.__choose_task_from_list()
+        except Exception as e:
+            print(f"Error: {e}")
+            return MLAgentIO.__choose_task_from_list()
 
+    @staticmethod
+    def __choose_task_from_list():
+        """
+            Prompts the user to select a task from a list of available tasks.
+
+            Behavior:
+                - Retrieves all available tasks.
+                - Displays a numbered list of tasks for the user to choose from.
+                - Continuously prompts the user until a valid task index is entered.
+                - Returns the selected task as a `Task` instance.
+
+            Returns:
+                Task: The task chosen by the user.
+        """
+        all_tasks = Task.list_all_tasks()
         print("Input the number before the task you want to choose:")
-        for i, task in enumerate(self.all_tasks):
-            print(i, task)
-        task_index = int(input())
-        chosen_task = Task(self.all_tasks[task_index])
+
+        while True:
+            for i, task in enumerate(all_tasks):
+                print(i, task)
+            task_index = int(input())
+            if 0 <= task_index < len(all_tasks):
+                break
+
+            print("Invalid number. Choose again:")
+
+        chosen_task = Task(all_tasks[task_index])
         return chosen_task
 
-    def __setup_task(self) -> str:
+    @staticmethod
+    def __setup_task(active_task: Task, run_timestamp_str: str) -> str:
         """
             Sets up the task environment by copying task-related files to a dedicated directory.
 
@@ -114,13 +162,13 @@ class MLAgentIO:
                 - Creates a unique environment directory for the active task.
                 - Copies files and directories from the task's setup directory into the environment directory.
         """
-        env_task_dir_name = f"{self.active_task.name}_{self.activation_timestamp}"
+        env_task_dir_name = f"{active_task.name}_{run_timestamp_str}"
         env_task_dir_path = os.path.join(MLAgentIO.ENVIRONMENT_DIR, env_task_dir_name)
         os.makedirs(env_task_dir_path, exist_ok=True)
 
-        content = os.listdir(self.active_task.get_dir_path())
+        content = os.listdir(active_task.get_dir_path())
         for file_name in content:
-            source_file_path = os.path.join(self.active_task.get_dir_path(), file_name)
+            source_file_path = os.path.join(active_task.get_dir_path(), file_name)
             destination_file_path = os.path.join(env_task_dir_path, file_name)
             if os.path.isfile(source_file_path):
                 shutil.copy(source_file_path, destination_file_path)
@@ -129,59 +177,15 @@ class MLAgentIO:
 
         return env_task_dir_path
 
-    def get_main_instructions(self) -> str:
-        """
-            Retrieves the instructions for the main assistant.
-
-            Returns:
-                str: The main assistant's instructions as a string.
-        """
-        return self.main_instructions
-
-    def get_supporting_instructions(self):
-        """
-           Retrieves the instructions for the supporting assistant.
-
-           Returns:
-               Any: The supporting assistant's instructions.
-       """
-        return self.supporting_instructions
-
-    def get_research_problem(self) -> str:
+    @staticmethod
+    def __get_research_problem(active_task: Task) -> str:
         """
             Retrieves the research problem description for the active task.
 
             Returns:
                 str: The research problem description formatted as "Research Problem: {description}".
         """
-        return f"Research Problem: {self.active_task.description}"
-
-    def get_active_task(self) -> Task:
-        """
-            Retrieves the currently active task.
-
-            Returns:
-                Task: The active `Task` instance.
-        """
-        return self.active_task
-
-    def get_task_env_dir_path(self) -> str:
-        """
-           Retrieves the directory path of the task environment.
-
-           Returns:
-               str: The task environment directory path.
-       """
-        return self.task_env_dir_path
-
-    def get_activation_timestamp(self):
-        """
-            Retrieves the activation timestamp of the current task.
-
-            Returns:
-                str: The timestamp when the task was activated.
-        """
-        return self.activation_timestamp
+        return f"Research Problem: {active_task.description}"
 
     @staticmethod
     def create_task(task_name: str) -> bool:
@@ -204,7 +208,7 @@ class MLAgentIO:
         """
         try:
             task_dir = os.path.join(Task.MAIN_DIR, task_name)
-            if os.path.exists(task_dir):
+            if task_name in tuple(Task.list_all_tasks()):
                 print(f"Error: Task '{task_name}' already exists")
                 return False
 
@@ -220,30 +224,30 @@ class MLAgentIO:
                 f.write("""# Enter your training script here""")
 
             guidelines_message = """
-    Please provide a description for your ML task.
+Please provide a description for your ML task.
 
-    Guidelines for writing a good task description:
-    --------------------------------------------
-    1. Clear Objective: State what the model needs to achieve
-    2. Performance Targets: Specify required improvements (e.g., 5% accuracy increase)
-    3. Constraints: Mention any limitations (e.g., max epochs, memory constraints)
-    4. Data Context: Briefly describe the dataset's nature if relevant
-    5. Submission Requirements: Specify what and how it needs to be saved
-    
-    You can also enter it manually in the file, for which you will have to press enter twice (2 empty lines)
-    to finish this input and leave the description empty.
+Guidelines for writing a good task description:
+--------------------------------------------
+1. Clear Objective: State what the model needs to achieve
+2. Performance Targets: Specify required improvements (e.g., 5% accuracy increase)
+3. Constraints: Mention any limitations (e.g., max epochs, memory constraints)
+4. Data Context: Briefly describe the dataset's nature if relevant
+5. Submission Requirements: Specify what and how it needs to be saved
 
-    Example description:
-    ------------------
-    You are given a training script (train.py) for a machine learning model on a specific dataset.
-    The model is already implemented using the current hyperparameters in train.py.
-    Your objective is to enhance the model's performance by improving the baseline accuracy
-    by at least 5% while keeping the number of training epochs within 10 to optimize efficiency.
-    You do not know what is the baseline accuracy of this model.
-    After training, you must generate a classification report and a confusion matrix for the test set,
-    saving them to submission.txt as specified in train.py.
+You can also enter it manually in the file, for which you will have to press enter twice (2 empty lines)
+to finish this input and leave the description empty.
 
-    Enter your task description (press Enter twice to finish):"""
+Example description:
+------------------
+You are given a training script (train.py) for a machine learning model on a specific dataset.
+The model is already implemented using the current hyperparameters in train.py.
+Your objective is to enhance the model's performance by improving the baseline accuracy
+by at least 5% while keeping the number of training epochs within 10 to optimize efficiency.
+You do not know what is the baseline accuracy of this model.
+After training, you must generate a classification report and a confusion matrix for the test set,
+saving them to submission.txt as specified in train.py.
+
+Enter your task description (press Enter twice to finish):"""
 
             print(guidelines_message)
 
@@ -262,12 +266,12 @@ class MLAgentIO:
                 f.write(description)
 
             completion_message = f"""
-    Task '{task_name}' created successfully!
-    Location: {task_dir}
+Task '{task_name}' created successfully!
+Location: {task_dir}
 
-    Next steps:
-    1. Add your dataset files to the 'data' directory
-    2. Implement your training script in train.py"""
+Next steps:
+1. Add your dataset files to the 'data' directory
+2. Implement your training script in train.py"""
 
             print(completion_message)
 
@@ -277,57 +281,130 @@ class MLAgentIO:
             print(f"Error creating task: {str(e)}")
             return False
 
-    @staticmethod
-    def save_performance_metrics(assistant_model: str, requests: int, tokens_spent: int,
-                                 money_spent: float, goal_achieved: bool) -> bool:
+    def run_task(self, task_name: str | None = None, auto: bool = False, terminate_after: int = 30):
         """
-        Saves agent performance metrics to evaluation/agent_performance.csv.
-        Creates the file and directory if they don't exist.
+            Runs a task with specified parameters and iterates through multiple steps to achieve the goal.
 
-        Parameters:
-            assistant_model (str): Name/version of the assistant model
-            requests (int): Number of requests made
-            tokens_spent (int): Total tokens used
-            money_spent (float): Total cost in dollars
-            goal_achieved (bool): Whether the task goal was achieved
+            Parameters:
+                task_name (str | None): The name of the task to execute. If None, the user is prompted to choose a task.
+                auto (bool): If True, automatically proceeds with the task. If False, the user is prompted for decisions during execution.
+                terminate_after (int): The iteration after which the task should automatically terminate (only relevant if `auto` is True).
 
-        Returns:
-            bool: True if metrics were saved successfully, False otherwise
-        """
-        try:
-            eval_dir = "../evaluation"
-            if not os.path.exists(eval_dir):
-                os.makedirs(eval_dir)
+            Behavior:
+                - Chooses a task if `task_name` is not provided.
+                - Sets up the task environment and logs.
+                - Initiates the conversation with the assistant and logs the instructions.
+                - Iterates through multiple steps, executing actions and capturing observations.
+                - Provides an option to manually control whether to continue or terminate the task.
+                - Records output and observation logs, including performance metrics and statistics.
+                - Automatically terminates if the goal is achieved or if the `auto` flag is set to True and `terminate_after` is reached.
+                - Evaluates the agent performance and saves the metrics at the end.
 
-            file_path = os.path.join(eval_dir, "agent_performance.csv")
+            Returns:
+                None
+            """
+        active_task = self.__choose_task(task_name=task_name)
+        run_timestamp_str = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        task_env_dir_path = self.__setup_task(active_task=active_task, run_timestamp_str=run_timestamp_str)
 
-            dtypes = {
-                'assistant_model': 'str',
-                'requests': 'int64',
-                'tokens_spent': 'int64',
-                'money_spent': 'float64',
-                'goal_achieved': 'bool'
-            }
+        self.executioner.setup(task_dir_path=task_env_dir_path)
+        self.logger.setup(task_name=active_task.name, log_timestamp_str=run_timestamp_str)
 
-            new_data = {
-                'assistant_model': [assistant_model],
-                'requests': [requests],
-                'tokens_spent': [tokens_spent],
-                'money_spent': [money_spent],
-                'goal_achieved': [goal_achieved]
-            }
-
-            new_df = pd.DataFrame(new_data).astype(dtypes)
-
-            if not os.path.exists(file_path):
-                new_df.to_csv(file_path, index=False)
+        iteration_index = 1
+        output = None
+        observation = None
+        goal_achieved = False
+        while True:
+            if iteration_index == 1:
+                output = self.main_assistant.initiate_conversation(
+                    research_problem=self.__get_research_problem(active_task=active_task))
+                self.logger.initial_log(instructions=self.main_instructions,
+                                        research_problem=self.__get_research_problem(active_task=active_task))
             else:
-                df = pd.read_csv(file_path, dtype=dtypes)
-                df = pd.concat([df, new_df], ignore_index=True)
-                df.to_csv(file_path, index=False)
+                output = self.main_assistant.consult(observation, iteration_index)
 
-            return True
+            print(f"\n=======Output ({iteration_index})=======:\n", output)
+            print("=" * 10)
 
-        except Exception as e:
-            print(f"Error saving performance metrics: {str(e)}")
-            return False
+            action_name, action_args, = self.parser.parse_message(output)
+            print("Action:\n", action_name, "\nAction Inputs:\n", action_args)
+            print("=" * 10)
+            if not auto:
+                print(
+                    "Should the stated action be executed? "
+                    "\nType 't' to force termination on the conversation."
+                    "\nType 'end' to forcefully end the agent process."
+                    "\nType anything else to proceed".upper())
+
+            if auto:
+                if iteration_index == terminate_after:
+                    command = 'T'
+                else:
+                    command = "Proceed"
+            else:
+                command = input()
+            command = command.lower()
+
+            if command.lower() == "end":
+                break
+
+            if command == "t":
+                output = self.main_assistant.consult("Terminate", iteration_index + 1)
+                print(f"\n=======Output ({iteration_index + 1})=======:\n", output)
+                print("=" * 10)
+                action_name, action_args, = self.parser.parse_message(output)
+                print("Action:\n", action_name, "\nAction Inputs:\n", action_args)
+                print("=" * 10)
+
+                observation = self.executioner.execute(action_name, action_args)
+                print("Observation:\n", observation)
+
+                self.logger.save_log(output, observation)
+
+                goal_achieved = self.parser.parse_final_message(observation)
+
+                self.logger.close()
+                break
+
+            observation = self.executioner.execute(action_name, action_args)
+            print("Observation:\n", observation)
+
+            self.logger.save_log(output, observation)
+
+            if ActionExecutioner.FINAL_ANSWER_FLAG in observation:
+                goal_achieved = self.parser.parse_final_message(observation)
+                self.logger.close()
+                break
+
+            if not auto:
+                print(
+                    "Should the agent process continue executing?"
+                    "\nType 'end' to forcefully terminate the agent."
+                    "\nType anything else to proceed.".upper())
+
+            command = "Proceed" if auto else input()
+            command = command.lower()
+            if command == "end":
+                break
+
+            iteration_index += 1
+
+        self.evaluator.save_performance_metrics(
+            task_name=active_task.name,
+            main_usage_statistics=self.main_assistant.get_and_reset_usage_statistics(),
+            supporting_usage_statistics=self.supporting_assistant.get_and_reset_usage_statistics(),
+            goal_achieved=goal_achieved)
+
+    def terminate(self):
+        """
+            Terminates the MLAgentIO by ending the conversation and shutting down the executioner.
+
+            Behavior:
+                - Ends the current conversation with the main assistant.
+                - Shuts down the executioner, stopping any ongoing operations.
+
+            Returns:
+                None
+        """
+        self.main_assistant.end_conversation()
+        self.executioner.shutdown()
