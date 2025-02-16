@@ -26,10 +26,10 @@ After each of your responses, you will receive two pieces of information:
 The iteration number.
 The observation of the specified action.
 
-When the iteration number reaches 12, you must terminate using the action/tool: Final answer.
 Regardless of the model's results, you must submit the output by saving it in submission.txt, by uncommenting the submission code and then running the script one final time.
 If, at any iteration, the observation contains the message "Terminate", you must IMMEDIATELY terminate, regardless of the iteration number.
 This termination process is mandatory and must be followed strictly.
+You MUST terminate using the action/tool: Final answer.
 
 DO NOT FORGET TO RESPONSE IN SPECIFIED FORMAT, EXACTLY!
 The final answer response MUST ALSO FOLLOW THE SPECIFIED FORMAT

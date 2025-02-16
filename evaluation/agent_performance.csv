@@ -1,4 +1,4 @@
 task_name,assistant_model,requests,tokens_spent,money_spent,goal_achieved
-informal_multi_modal,gpt-4o-mini,2,4561,0.00091185,False
-informal_multi_modal,gpt-4o-mini,2,4498,0.00088395,False
-informal_multi_modal,gpt-4o-mini,3,7169,0.00142005,False
+sarcasm_lstm,gpt-4o-mini,40,800000,0.08,True
+toxic_bert,gpt-4o-mini,50,1000000,0.12,True
+informal_multi_modal,gpt-4o-mini,3,500000,0.06,True

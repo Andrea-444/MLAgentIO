@@ -52,13 +52,29 @@ A Task is a structured set of instructions for the agent. It consists of:
    ```
    This contains a detailed record of the agent’s actions.
 
+## Example Tasks
+
+MLAgentIO includes three example tasks that demonstrate its core capabilities:
+
+- **`sarcasm_lstm`**  
+  This task focuses on improving an existing model. The goal is to enhance the baseline accuracy of the provided LSTM-based classification model by **5%**. It showcases the agent’s ability to refine and optimize pre-existing architectures.
+
+- **`toxic_bert`**  
+  This task demonstrates the agent’s ability to **create a model from scratch**. It involves building a BERT-based classification model using the `transformers` library, showcasing MLAgentIO's feature of generating models from zero.
+
+- **`informal_multi_modal`**  
+  This task highlights the agent's ability to **compare different architectures**. It involves testing two approaches—one using **LSTM and convolutional layers**, and another based on a **pretrained BERT model** from the `transformers` library. The agent evaluates both and determines the better-performing architecture.
+
+These example tasks serve as a starting point for users to understand MLAgentIO’s capabilities in **improving**, **creating**, and **comparing** machine learning models.
+
+
 ## Future Plans
 
 - Extend support for additional LLMs beyond OpenAI.
 
 ## License
 
-This project is developed by Viktor Kostadinoski and Andrea Stevanoska from the Faculty of Computer Science in Skopje, under the guidance of Professor Sonja Gievska and Teaching and Research Assistant Martina Toshevska. Redistribution and use of this code, with or without modification, are permitted for educational and research purposes, provided proper credit is given to the original authors.
+This project is developed by Viktor Kostadinoski and Andrea Stevanoska from the Faculty of Computer Science and Engineering in Skopje, under the guidance of Professor Sonja Gievska and Teaching and Research Assistant Martina Toshevska. Redistribution and use of this code, with or without modification, are permitted for educational and research purposes, provided proper credit is given to the original authors.
 
 MLAgentIO is inspired by MLAgentBench from Stanford: [MLAgentBench](https://github.com/snap-stanford/MLAgentBench) and the research paper: [MLAgentBench Paper](https://arxiv.org/abs/2310.03302).
 

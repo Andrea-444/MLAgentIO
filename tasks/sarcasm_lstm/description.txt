@@ -5,5 +5,3 @@ by at least 5% while keeping the number of training epochs within 10 to optimize
 You do not know what is the baseline accuracy of this model.
 After training, you must generate a classification report and a confusion matrix for the test set,
 saving them to submission.txt as specified in train.py.
-
-

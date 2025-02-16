@@ -51,19 +51,6 @@ class LLMAssistant:
         return {"role": "assistant", "content": response}
 
     @staticmethod
-    def print_message(message: dict):
-        """
-            Displays the conversation history in a readable format.
-
-            Behavior:
-                - Prints a separator followed by the stored conversation history.
-                - Calls 'print_message' for each message in the history.
-        """
-        print("ROLE:", message["role"])
-        print("CONTENT:\n", message["content"])
-        print("=" * 100)
-
-    @staticmethod
     def print_context(context: list):
         """
             Prints the content of all messages in a given conversation context.
@@ -192,18 +179,6 @@ class LLMAssistant:
         output = self.__ask_assistant(context)
         return output
 
-    def print_history(self):
-        """
-            Displays the conversation history in a readable format.
-
-            Behavior:
-                - Prints a separator followed by the stored conversation history.
-                - Calls 'print_message' for each message in the history.
-        """
-        print("=" * 50, "HISTORY", "=" * 50)
-        for message in self.history:
-            self.print_message(message)
-
     def get_usage_statistics(self) -> UsageStatistics:
         """
             Retrieves the current usage statistics.
@@ -241,6 +216,30 @@ class LLMAssistant:
         statistics = self.get_usage_statistics()
         self.reset_usage_statistics()
         return statistics
+
+    def get_history(self) -> list[dict]:
+        """
+            Retrieves the assistant's conversation history.
+
+            Behavior:
+                - Returns a list containing the past interactions between the assistant and the user.
+
+            Returns:
+                list: The stored conversation history.
+        """
+        return self.history
+
+    def get_model(self) -> str:
+        """
+            Retrieves the assistant model being used.
+
+            Returns:
+            str: The name of the assistant model.
+
+            Behavior:
+            - Returns the model associated with the assistant.
+        """
+        return self.model
 
     def end_conversation(self):
         """

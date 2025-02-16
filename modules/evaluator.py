@@ -1,4 +1,6 @@
 import os
+from typing import Optional, Tuple
+
 import pandas as pd
 from openai.types.chat import ChatCompletion
 
@@ -47,7 +49,7 @@ class AgentEvaluator:
     @staticmethod
     def save_performance_metrics(task_name: str, main_usage_statistics: UsageStatistics,
                                  supporting_usage_statistics: UsageStatistics,
-                                 goal_achieved: bool) -> bool:
+                                 goal_achieved: bool) -> Tuple[Optional[int], Optional[int], Optional[float]]:
         """
         Saves agent performance metrics to evaluation/agent_performance.csv.
         Creates the file and directory if they don't exist.
@@ -110,8 +112,8 @@ class AgentEvaluator:
                 df = pd.concat([df, new_df], ignore_index=True)
                 df.to_csv(file_path, index=False)
 
-            return True
+            return total_requests, tokens_spent, money_spent
 
         except Exception as e:
             print(f"Error saving performance metrics: {str(e)}")
-            return False
+            return None, None, None

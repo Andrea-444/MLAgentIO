@@ -4,7 +4,7 @@ from datetime import datetime
 
 from modules.action_executioner import ActionExecutioner
 from modules.action_parser import ActionParser
-from modules.evaluator import AgentEvaluator
+from modules.evaluator import AgentEvaluator, UsageStatistics
 from modules.llm_assistant import LLMAssistant
 from modules.logger import AgentLogger
 from modules.low_level_actions import read_file
@@ -47,6 +47,46 @@ class Task:
         return os.listdir(Task.MAIN_DIR)
 
 
+class TaskResult:
+
+    def __init__(self, model: str, task: Task, instructions: str, history: [dict], usage_statistics: [UsageStatistics],
+                 total_tokens: int, total_requests: int, money_spent: float, goal_achieved: bool):
+        self.instructions = instructions
+        self.model = model
+        self.goal_achieved = goal_achieved
+        self.money_spent = money_spent
+        self.total_requests = total_requests
+        self.total_tokens = total_tokens
+        self.usage_statistics = usage_statistics
+        self.history = history
+        self.task = task
+
+    @staticmethod
+    def print_message(message: dict):
+        """
+            Displays the conversation history in a readable format.
+
+            Behavior:
+                - Prints a separator followed by the stored conversation history.
+                - Calls 'print_message' for each message in the history.
+        """
+        print("ROLE:", message["role"])
+        print("CONTENT:\n", message["content"])
+        print("=" * 100)
+
+    def print_history(self):
+        """
+            Displays the conversation history in a readable format.
+
+            Behavior:
+                - Prints a separator followed by the stored conversation history.
+                - Calls 'print_message' for each message in the history.
+        """
+        print("=" * 50, "HISTORY", "=" * 50)
+        for message in self.history:
+            self.print_message(message)
+
+
 class MLAgentIO:
     MAIN_LLM_INSTRUCTIONS_DIR = "../assistants_instructions/main"
     SUPPORTING_LLM_INSTRUCTIONS_DIR = "../assistants_instructions/supporting"
@@ -61,7 +101,7 @@ class MLAgentIO:
                                            )
         self.supporting_assistant = LLMAssistant(api_key=api_key,
                                                  starting_instructions=self.supporting_instructions,
-                                                 model=assistant_model
+                                                 model=None
                                                  )
 
         self.parser = ActionParser()
@@ -262,7 +302,7 @@ Enter your task description (press Enter twice to finish):"""
             description = "\n".join(lines).strip()
 
             description_path = os.path.join(task_dir, "description.txt")
-            with open(description_path, 'w') as f:
+            with open(description_path, 'w', encoding="utf-8") as f:
                 f.write(description)
 
             completion_message = f"""
@@ -271,9 +311,14 @@ Location: {task_dir}
 
 Next steps:
 1. Add your dataset files to the 'data' directory
-2. Implement your training script in train.py"""
+2. Implement a starting training script in train.py
+
+After completing steps 1 and 2, press any key in the console to finalize task creation. 
+"""
 
             print(completion_message)
+
+            input()
 
             return True
 
@@ -281,7 +326,7 @@ Next steps:
             print(f"Error creating task: {str(e)}")
             return False
 
-    def run_task(self, task_name: str | None = None, auto: bool = False, terminate_after: int = 30):
+    def run_task(self, task_name: str | None = None, auto: bool = False, terminate_after: int = 30) -> TaskResult:
         """
             Runs a task with specified parameters and iterates through multiple steps to achieve the goal.
 
@@ -389,11 +434,24 @@ Next steps:
 
             iteration_index += 1
 
-        self.evaluator.save_performance_metrics(
+        main_usage_statistics = self.main_assistant.get_and_reset_usage_statistics()
+        supporting_usage_statistics = self.supporting_assistant.get_and_reset_usage_statistics()
+        total_requests, tokens_spent, money_spent = self.evaluator.save_performance_metrics(
             task_name=active_task.name,
-            main_usage_statistics=self.main_assistant.get_and_reset_usage_statistics(),
-            supporting_usage_statistics=self.supporting_assistant.get_and_reset_usage_statistics(),
+            main_usage_statistics=main_usage_statistics,
+            supporting_usage_statistics=supporting_usage_statistics,
             goal_achieved=goal_achieved)
+
+        task_result = TaskResult(model=self.main_assistant.get_model(),
+                                 task=active_task,
+                                 instructions=self.main_instructions,
+                                 history=self.main_assistant.get_history(),
+                                 usage_statistics=[main_usage_statistics, supporting_usage_statistics],
+                                 total_tokens=tokens_spent,
+                                 total_requests=total_requests,
+                                 money_spent=money_spent,
+                                 goal_achieved=goal_achieved)
+        return task_result
 
     def terminate(self):
         """

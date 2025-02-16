@@ -6,8 +6,7 @@ if __name__ == '__main__':
 
     # Load the OpenAI API key from a file.
     # This key is required for interacting with OpenAI's API and using the assistant model.
-    # API_KEY = read_file("{a path to an OpenAI API key}")
-    API_KEY = read_file("../api_keys/open_ai.txt")
+    API_KEY = read_file("{a path to an OpenAI API key}")
 
     # Specify the assistant model to use.
     # The model determines how well the agent will respond during the task.
@@ -18,20 +17,21 @@ if __name__ == '__main__':
     ml_agent_io = MLAgentIO(api_key=API_KEY, assistant_model=assistant_model)
 
     # ====================== EXECUTION ======================
+
     # Set the task name.
     # If task_name is set to None, the user will be prompted to choose from available tasks.
     task_name = "{the task name}"
 
     # Run the chosen task with the 'auto' flag set to True and terminate after 12 iterations.
     # This will allow the agent to execute the task without manual intervention and stop after 12 iterations.
-    ml_agent_io.run_task(task_name=task_name, auto=True, terminate_after=12)
+    task_result_1 = ml_agent_io.run_task(task_name=task_name, auto=True, terminate_after=12)
 
     #     OR
 
     # Alternatively, you can create and set up a new task
     ml_agent_io.create_task(task_name=task_name)
     # and then run it.
-    ml_agent_io.run_task(task_name=task_name, auto=True, terminate_after=12)
+    task_result_2 = ml_agent_io.run_task(task_name=task_name, auto=True, terminate_after=2)
 
     # ====================== TERMINATION =====================
 
